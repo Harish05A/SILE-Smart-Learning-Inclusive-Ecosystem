@@ -1,0 +1,28 @@
+/* High Contrast Preset */
+.theme-high-contrast {
+  background-color: #000000 !important;
+  color: #ffff00 !important;
+}
+
+.theme-high-contrast button,
+.theme-high-contrast input,
+.theme-high-contrast select {
+  border: 2px solid #ffffff !important;
+  background-color: #111111 !important;
+  color: #ffffff !important;
+}
+
+/* Dyslexia-Friendly Font Preset */
+.font-dyslexic {
+  font-family: 'OpenDyslexic', 'Comic Sans MS', sans-serif !important;
+  letter-spacing: 0.05em !important;
+  word-spacing: 0.1em !important;
+}
+
+/* Reduced Animations Mode */
+.reduced-motion * {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}

@@ -1,0 +1,109 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-scale: 100%;
+    --content-line-height: 1.6;
+  }
+
+  html {
+    font-size: var(--font-scale);
+  }
+
+  body {
+    line-height: var(--content-line-height);
+    @apply antialiased text-slate-900 bg-slate-50;
+  }
+
+  /* Universal high-visibility keyboard focus indicator */
+  :focus-visible {
+    outline: 2px solid #4f46e5 !important;
+    outline-offset: 2px !important;
+  }
+
+  /* High Contrast Mode */
+  .theme-high-contrast {
+    --tw-bg-opacity: 1;
+    background-color: #000000 !important;
+    color: #ffffff !important;
+  }
+
+  .theme-high-contrast body {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+  }
+
+  .theme-high-contrast nav,
+  .theme-high-contrast header,
+  .theme-high-contrast footer,
+  .theme-high-contrast div[class*="bg-white"],
+  .theme-high-contrast div[class*="bg-slate-"],
+  .theme-high-contrast section[class*="bg-white"],
+  .theme-high-contrast form[class*="bg-white"] {
+    background-color: #121212 !important;
+    color: #ffffff !important;
+    border-color: #ffffff !important;
+  }
+
+  .theme-high-contrast p,
+  .theme-high-contrast span,
+  .theme-high-contrast label,
+  .theme-high-contrast h1,
+  .theme-high-contrast h2,
+  .theme-high-contrast h3,
+  .theme-high-contrast h4,
+  .theme-high-contrast th,
+  .theme-high-contrast td {
+    color: #ffffff !important;
+  }
+
+  .theme-high-contrast button[class*="bg-indigo-600"],
+  .theme-high-contrast a[class*="bg-indigo-600"] {
+    background-color: #ffff00 !important;
+    color: #000000 !important;
+    font-weight: 700 !important;
+    border: 2px solid #ffffff !important;
+  }
+
+  .theme-high-contrast button[class*="bg-slate-"],
+  .theme-high-contrast button[class*="border-slate-"] {
+    background-color: #222222 !important;
+    color: #ffffff !important;
+    border: 2px solid #ffffff !important;
+  }
+
+  .theme-high-contrast input,
+  .theme-high-contrast select,
+  .theme-high-contrast textarea {
+    background-color: #1e1e1e !important;
+    color: #ffffff !important;
+    border: 2px solid #ffffff !important;
+  }
+
+  .theme-high-contrast :focus-visible {
+    outline: 3px solid #ffff00 !important;
+    outline-offset: 3px !important;
+  }
+
+  /* Skip to main content link for screen readers & keyboard navigation */
+  .skip-link {
+    position: absolute;
+    top: -100px;
+    left: 1rem;
+    background: #4f46e5;
+    color: #ffffff;
+    padding: 0.75rem 1.25rem;
+    z-index: 9999;
+    border-radius: 0.5rem;
+    font-weight: 700;
+    font-size: 0.875rem;
+    transition: top 0.2s ease-in-out;
+  }
+
+  .skip-link:focus {
+    top: 1rem;
+    outline: 3px solid #ffff00;
+  }
+}
