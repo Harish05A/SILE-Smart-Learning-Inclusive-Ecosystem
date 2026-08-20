@@ -11,6 +11,8 @@ from app.models.profile import LearnerProfile, LearningPace, PreferredContentTyp
 from app.models.preference import LearningPreference
 from app.models.accessibility import AccessibilityPreference
 from app.models.assessment import Assessment, AssessmentQuestion, QuestionDifficulty
+from app.db.seeds.curriculum_seed import seed_curriculum_and_content
+from app.db.seeds.practice_seed import seed_practice_questions
 
 # ==============================================================================
 # DEMO SEED CONFIGURATION (DEVELOPMENT ONLY)
@@ -262,16 +264,20 @@ async def seed_demo_assessment(db: AsyncSession) -> Assessment:
 
 
 async def seed_all_demo_data(db: AsyncSession):
-    """Run all demo seed procedures."""
+    """Run all demo, curriculum, and practice seed procedures."""
     print("==================================================")
     print("STARTING SILE DEVELOPMENT & DEMO SEED PROCESS")
     print("==================================================")
     user = await seed_demo_user(db)
     assessment = await seed_demo_assessment(db)
+    await seed_curriculum_and_content(db)
+    await seed_practice_questions(db)
     print("==================================================")
-    print("DEMO SEED COMPLETED SUCCESSFULLY!")
+    print("DEMO, CURRICULUM & PRACTICE SEED COMPLETED SUCCESSFULLY!")
     print(f"Demo Credentials: {DEMO_USER_EMAIL} / {DEMO_USER_PASSWORD_RAW}")
     print(f"Assessment Seeded: {assessment.title} ({assessment.total_questions} Questions)")
+    print("Curriculum: Mathematics (5 Topics, 19 Skills, 20 Content Modules)")
+    print("Practice Sets: Multi-Difficulty Calibrated Question Bank (20 Questions)")
     print("==================================================")
     return user, assessment
 

@@ -8,7 +8,14 @@ import { ProtectedRoute } from './ProtectedRoute';
 import { LandingPage } from '../pages/LandingPage';
 import { LoginPage } from '../pages/auth/LoginPage';
 import { RegisterPage } from '../pages/auth/RegisterPage';
-import { DashboardPage } from '../pages/dashboard/DashboardPage';
+import { LearningHomePage } from '../pages/learning/LearningHomePage';
+import { SubjectsPage } from '../pages/curriculum/SubjectsPage';
+import { TopicsPage } from '../pages/curriculum/TopicsPage';
+import { ContentViewerPage } from '../pages/content/ContentViewerPage';
+import { RecommendationsPage } from '../pages/recommendations/RecommendationsPage';
+import { LearningPathPage } from '../pages/learning-path/LearningPathPage';
+import { TopicPerformancePage } from '../pages/performance/TopicPerformancePage';
+import { PracticePage } from '../pages/practice/PracticePage';
 import { ProfilePage } from '../pages/profile/ProfilePage';
 import { PreferencesPage } from '../pages/preferences/PreferencesPage';
 import { AssessmentListPage } from '../pages/assessment/AssessmentListPage';
@@ -33,13 +40,31 @@ export const AppRoutes: React.FC = () => {
       {/* Protected Learner Portal Pages */}
       <Route element={<ProtectedRoute />}>
         <Route element={<DashboardLayout />}>
-          <Route path="/dashboard" element={<DashboardPage />} />
+          {/* Phase 2 Learning Home & Dashboard */}
+          <Route path="/dashboard" element={<LearningHomePage />} />
+          <Route path="/learning" element={<LearningHomePage />} />
+
+          {/* Phase 2 Curriculum & Content */}
+          <Route path="/subjects" element={<SubjectsPage />} />
+          <Route path="/topics" element={<TopicsPage />} />
+          <Route path="/content/:contentId" element={<ContentViewerPage />} />
+
+          {/* Phase 2 Adaptive Practice & Mastery */}
+          <Route path="/practice" element={<PracticePage />} />
+          <Route path="/practice/:topicId" element={<PracticePage />} />
+          <Route path="/recommendations" element={<RecommendationsPage />} />
+          <Route path="/learning-path" element={<LearningPathPage />} />
+          <Route path="/learning-paths" element={<Navigate to="/learning-path" replace />} />
+          <Route path="/performance" element={<TopicPerformancePage />} />
+
+          {/* Phase 1 Foundations */}
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/preferences" element={<PreferencesPage />} />
           <Route path="/assessments" element={<AssessmentListPage />} />
           <Route path="/assessments/:id" element={<TakeAssessmentPage />} />
           <Route path="/assessments/:id/result" element={<AssessmentResultsPage />} />
-          {/* Legacy route alias */}
+          
+          {/* Aliases */}
           <Route path="/assessment" element={<Navigate to="/assessments" replace />} />
           <Route path="/assessment/results" element={<Navigate to="/assessments" replace />} />
         </Route>
