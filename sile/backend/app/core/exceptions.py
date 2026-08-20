@@ -34,3 +34,8 @@ class ForbiddenOperationException(SileException):
 class ConflictException(SileException):
     def __init__(self, message: str):
         super().__init__(message=message, status_code=409)
+
+
+class ValidationException(SileException):
+    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
+        super().__init__(message=message, status_code=422, details=details)

@@ -10,6 +10,12 @@ if TYPE_CHECKING:
     from app.models.preference import LearningPreference
     from app.models.accessibility import AccessibilityPreference
     from app.models.assessment import AssessmentAttempt
+    from app.models.adaptive import (
+        TopicPerformance,
+        LearningRecommendation,
+        LearningPath,
+        PracticeAttempt,
+    )
 
 
 class LearningPace(str, enum.Enum):
@@ -34,7 +40,7 @@ class LearnerProfile(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         ForeignKey("users.id", ondelete="CASCADE"),
         unique=True,
         nullable=False,
-        index=True
+        index=True,
     )
     full_name: Mapped[str] = mapped_column(String(255), nullable=False)
     age: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
@@ -43,30 +49,52 @@ class LearnerProfile(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     learning_pace: Mapped[LearningPace] = mapped_column(
         Enum(LearningPace, name="learning_pace_enum"),
         default=LearningPace.MODERATE,
-        nullable=False
+        nullable=False,
     )
     preferred_content_type: Mapped[PreferredContentType] = mapped_column(
         Enum(PreferredContentType, name="preferred_content_type_enum"),
         default=PreferredContentType.MIXED,
-        nullable=False
+        nullable=False,
     )
 
-    # Relationships
+    # Relationships (Phase 1)
     user: Mapped["User"] = relationship("User", back_populates="learner_profile")
     learning_preference: Mapped["LearningPreference"] = relationship(
         "LearningPreference",
         back_populates="learner_profile",
         uselist=False,
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
     )
     accessibility_preference: Mapped["AccessibilityPreference"] = relationship(
         "AccessibilityPreference",
         back_populates="learner_profile",
         uselist=False,
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
     )
     assessment_attempts: Mapped[List["AssessmentAttempt"]] = relationship(
         "AssessmentAttempt",
         back_populates="learner_profile",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
+    )
+
+    # Relationships (Phase 2 Adaptive Extensions)
+    topic_performances: Mapped[List["TopicPerformance"]] = relationship(
+        "TopicPerformance",
+        back_populates="learner_profile",
+        cascade="all, delete-orphan",
+    )
+    recommendations: Mapped[List["LearningRecommendation"]] = relationship(
+        "LearningRecommendation",
+        back_populates="learner_profile",
+        cascade="all, delete-orphan",
+    )
+    learning_paths: Mapped[List["LearningPath"]] = relationship(
+        "LearningPath",
+        back_populates="learner_profile",
+        cascade="all, delete-orphan",
+    )
+    practice_attempts: Mapped[List["PracticeAttempt"]] = relationship(
+        "PracticeAttempt",
+        back_populates="learner_profile",
+        cascade="all, delete-orphan",
     )
