@@ -70,12 +70,12 @@ export const LoginPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Sign in to SILE</h1>
-        <p className="text-sm text-slate-500 mt-1">Access your personalized, inclusive learning portal</p>
+        <h1 className="text-2xl font-bold tracking-tight text-surface-900 dark:text-white">Sign in to SILE</h1>
+        <p className="text-xs sm:text-sm text-surface-600 dark:text-surface-400 mt-1">Access your personalized, inclusive learning portal</p>
       </div>
 
       {successMessage && (
-        <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-lg text-sm text-emerald-800 flex items-center space-x-2">
+        <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-xs text-emerald-800 dark:text-emerald-200 flex items-center space-x-2">
           <svg className="h-4 w-4 text-emerald-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
             <path
               fillRule="evenodd"
@@ -114,14 +114,14 @@ export const LoginPage: React.FC = () => {
           disabled={isLoading}
         />
 
-        <Button type="submit" className="w-full mt-2" isLoading={isLoading}>
+        <Button type="submit" variant="primary" className="w-full mt-2" isLoading={isLoading}>
           Sign in
         </Button>
       </form>
 
-      <div className="text-center text-sm text-slate-600 border-t border-slate-100 pt-4">
+      <div className="text-center text-xs sm:text-sm text-surface-600 dark:text-surface-400 border-t border-surface-100 dark:border-surface-800 pt-4">
         Don't have an account?{' '}
-        <Link to="/register" className="font-semibold text-indigo-600 hover:text-indigo-500">
+        <Link to="/register" className="font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-500">
           Create an account
         </Link>
       </div>

@@ -40,6 +40,11 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = "sile_db"
     DATABASE_URL: Union[str, None] = None
 
+    # LLM Configuration
+    LLM_PROVIDER: str = "mock"
+    GEMINI_API_KEY: Union[str, None] = None
+    GEMINI_MODEL: str = "gemini-3.5-flash"
+
     @property
     def async_database_url(self) -> str:
         if self.DATABASE_URL:

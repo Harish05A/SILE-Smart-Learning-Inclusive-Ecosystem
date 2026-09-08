@@ -1,38 +1,41 @@
 import React from 'react';
-import { useLocation, Link } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AssessmentAttemptResult } from '../../types/assessment.types';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 export const AssessmentResultsPage: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const result = (location.state as any)?.result as AssessmentAttemptResult | undefined;
 
   if (!result) {
     return (
-      <div className="max-w-md mx-auto text-center py-16 space-y-4">
-        <h2 className="text-xl font-bold text-slate-900">No Assessment Results Found</h2>
-        <p className="text-sm text-slate-500">
-          Please take or select an assessment to view diagnostic performance metrics.
-        </p>
-        <Link to="/assessments">
-          <Button>View Assessments</Button>
-        </Link>
-      </div>
+      <EmptyState
+        title="No Assessment Results Found"
+        description="Please select or complete an assessment to view your diagnostic performance metrics."
+        action={
+          <Button variant="primary" onClick={() => navigate('/assessments')}>
+            View Assessments
+          </Button>
+        }
+      />
     );
   }
 
-  const levelBadgeConfig = {
+  const levelBadgeConfig: Record<string, { variant: 'brand' | 'success' | 'warning' | 'info'; description: string }> = {
     Beginner: {
-      bg: 'bg-blue-50 text-blue-800 border-blue-200',
+      variant: 'info',
       description: 'Foundational review and step-by-step scaffolds recommended.',
     },
     Developing: {
-      bg: 'bg-amber-50 text-amber-800 border-amber-200',
+      variant: 'warning',
       description: 'Solid conceptual footing; ready for progressive practice modules.',
     },
     Proficient: {
-      bg: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+      variant: 'success',
       description: 'Strong mastery of foundational arithmetic, algebra, and geometry concepts.',
     },
   };
@@ -41,95 +44,85 @@ export const AssessmentResultsPage: React.FC = () => {
     levelBadgeConfig[result.learning_level] || levelBadgeConfig.Developing;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 pb-12">
+    <div className="max-w-4xl mx-auto space-y-6 pb-12 animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-surface-200 dark:border-surface-800 pb-4">
         <div>
-          <div className="inline-flex items-center space-x-2 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 mb-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
-            <span className="text-[11px] uppercase font-semibold text-emerald-700 tracking-wider">
-              Diagnostic Complete
-            </span>
+          <div className="flex items-center gap-2 mb-1">
+            <Badge variant="success" size="sm">Diagnostic Complete</Badge>
+            <span className="text-xs text-surface-500 font-medium">Readiness Profile Updated</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Assessment Results</h1>
-          <p className="text-xs text-slate-500 mt-1">{result.assessment_title}</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-surface-900 dark:text-white tracking-tight">Assessment Results</h1>
+          <p className="text-xs text-surface-500 mt-1">{result.assessment_title}</p>
         </div>
 
-        <Link to="/dashboard">
-          <Button variant="primary" size="md">
-            Return to Dashboard &rarr;
-          </Button>
-        </Link>
+        <Button variant="primary" onClick={() => navigate('/dashboard')}>
+          Go to Learner Home →
+        </Button>
       </div>
 
       {/* Summary Score Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Total Score */}
-        <Card className="p-5 flex flex-col justify-between">
-          <span className="text-xs font-semibold uppercase text-slate-500 tracking-wider">
+        <Card variant="default" className="p-5 flex flex-col justify-between">
+          <span className="text-xs font-semibold uppercase text-surface-500 tracking-wider">
             Total Score
           </span>
           <div className="mt-2 flex items-baseline space-x-2">
-            <span className="text-3xl font-extrabold text-slate-900">{result.score}</span>
-            <span className="text-sm font-medium text-slate-400">/ {result.total_questions}</span>
+            <span className="text-3xl font-extrabold text-surface-900 dark:text-white">{result.score}</span>
+            <span className="text-sm font-medium text-surface-400">/ {result.total_questions}</span>
           </div>
-          <span className="text-[11px] text-slate-500 mt-2">Questions answered correctly</span>
+          <span className="text-[11px] text-surface-500 mt-2">Questions answered correctly</span>
         </Card>
 
         {/* Percentage */}
-        <Card className="p-5 flex flex-col justify-between">
-          <span className="text-xs font-semibold uppercase text-slate-500 tracking-wider">
+        <Card variant="default" className="p-5 flex flex-col justify-between">
+          <span className="text-xs font-semibold uppercase text-surface-500 tracking-wider">
             Percentage
           </span>
           <div className="mt-2">
-            <span className="text-3xl font-extrabold text-indigo-600">{result.percentage}%</span>
+            <span className="text-3xl font-extrabold text-brand-600 dark:text-brand-400">{result.percentage}%</span>
           </div>
-          <span className="text-[11px] text-slate-500 mt-2">Overall diagnostic accuracy</span>
+          <span className="text-[11px] text-surface-500 mt-2">Diagnostic baseline accuracy</span>
         </Card>
 
         {/* Correct Count */}
-        <Card className="p-5 flex flex-col justify-between">
-          <span className="text-xs font-semibold uppercase text-slate-500 tracking-wider">
+        <Card variant="default" className="p-5 flex flex-col justify-between">
+          <span className="text-xs font-semibold uppercase text-surface-500 tracking-wider">
             Correct Answers
           </span>
           <div className="mt-2 flex items-center space-x-2">
-            <span className="text-3xl font-extrabold text-emerald-600">{result.correct_count}</span>
-            <span className="text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
-              Correct
-            </span>
+            <span className="text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">{result.correct_count}</span>
+            <Badge variant="success" size="sm">Verified</Badge>
           </div>
-          <span className="text-[11px] text-slate-500 mt-2">Verified accurate options</span>
+          <span className="text-[11px] text-surface-500 mt-2">Accurate concept demonstrations</span>
         </Card>
 
         {/* Incorrect Count */}
-        <Card className="p-5 flex flex-col justify-between">
-          <span className="text-xs font-semibold uppercase text-slate-500 tracking-wider">
-            Incorrect / Skipped
+        <Card variant="default" className="p-5 flex flex-col justify-between">
+          <span className="text-xs font-semibold uppercase text-surface-500 tracking-wider">
+            Reinforcement Areas
           </span>
           <div className="mt-2 flex items-center space-x-2">
-            <span className="text-3xl font-extrabold text-rose-600">{result.incorrect_count}</span>
-            <span className="text-xs font-medium text-rose-700 bg-rose-50 px-2 py-0.5 rounded">
-              Incorrect
-            </span>
+            <span className="text-3xl font-extrabold text-rose-600 dark:text-rose-400">{result.incorrect_count}</span>
+            <Badge variant="danger" size="sm">Focus</Badge>
           </div>
-          <span className="text-[11px] text-slate-500 mt-2">Identified for reinforcement</span>
+          <span className="text-[11px] text-surface-500 mt-2">Targeted for adaptive scaffolding</span>
         </Card>
       </div>
 
       {/* Learning Level Banner */}
-      <Card className="p-6">
+      <Card variant="elevated" className="p-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="space-y-1">
-            <span className="text-xs font-semibold uppercase text-slate-500 tracking-wider">
-              Assigned Learning Level
+            <span className="text-xs font-semibold uppercase text-surface-500 tracking-wider">
+              Calibrated Readiness Level
             </span>
-            <div className="flex items-center space-x-3">
-              <span
-                className={`px-3 py-1 rounded-lg text-sm font-bold border ${currentLevelConfig.bg}`}
-              >
+            <div className="flex items-center space-x-3 mt-1">
+              <Badge variant={currentLevelConfig.variant} size="md">
                 {result.learning_level}
-              </span>
-              <p className="text-xs text-slate-600">{currentLevelConfig.description}</p>
+              </Badge>
+              <p className="text-xs text-surface-600 dark:text-surface-400">{currentLevelConfig.description}</p>
             </div>
           </div>
         </div>
@@ -138,37 +131,41 @@ export const AssessmentResultsPage: React.FC = () => {
       {/* Detailed Question Review */}
       {result.answers_summary && result.answers_summary.length > 0 && (
         <div className="space-y-4">
-          <h2 className="text-lg font-bold text-slate-900">Question-by-Question Review</h2>
+          <h2 className="text-lg font-bold text-surface-900 dark:text-white px-1">
+            Question-by-Question Review ({result.answers_summary.length})
+          </h2>
 
           <div className="space-y-3">
             {result.answers_summary.map((item, idx) => (
-              <Card
+              <div
                 key={item.question_id || idx}
-                className={`p-4 border-l-4 ${
-                  item.is_correct ? 'border-l-emerald-500' : 'border-l-rose-500'
+                className={`p-5 rounded-xl border ${
+                  item.is_correct
+                    ? 'bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-850/60'
+                    : 'bg-rose-50/40 dark:bg-rose-950/20 border-rose-200 dark:border-rose-850/60'
                 }`}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-1">
-                    <span className="text-[11px] font-bold text-slate-400 uppercase">
+                    <span className="text-[11px] font-bold text-surface-400 uppercase">
                       Question {idx + 1}
                     </span>
-                    <p className="text-sm font-medium text-slate-900">{item.question_text}</p>
+                    <p className="text-sm font-medium text-surface-900 dark:text-white">{item.question_text}</p>
                     <div className="flex flex-wrap gap-4 text-xs pt-2">
-                      <span className="text-slate-600">
+                      <span className="text-surface-600 dark:text-surface-400">
                         Your Answer:{' '}
                         <span
                           className={`font-semibold ${
-                            item.is_correct ? 'text-emerald-700' : 'text-rose-700'
+                            item.is_correct ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'
                           }`}
                         >
                           Option {item.selected_answer || 'None'}
                         </span>
                       </span>
                       {!item.is_correct && (
-                        <span className="text-slate-600">
+                        <span className="text-surface-600 dark:text-surface-400">
                           Correct Answer:{' '}
-                          <span className="font-semibold text-emerald-700">
+                          <span className="font-semibold text-emerald-700 dark:text-emerald-400">
                             Option {item.correct_answer}
                           </span>
                         </span>
@@ -176,29 +173,21 @@ export const AssessmentResultsPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <span
-                    className={`px-2.5 py-1 rounded text-xs font-semibold ${
-                      item.is_correct
-                        ? 'bg-emerald-50 text-emerald-700'
-                        : 'bg-rose-50 text-rose-700'
-                    }`}
-                  >
+                  <Badge variant={item.is_correct ? 'success' : 'danger'} size="sm">
                     {item.is_correct ? '✓ Correct' : '✗ Incorrect'}
-                  </span>
+                  </Badge>
                 </div>
-              </Card>
+              </div>
             ))}
           </div>
         </div>
       )}
 
       {/* Bottom Dashboard CTA */}
-      <div className="pt-6 border-t border-slate-200 flex justify-center">
-        <Link to="/dashboard">
-          <Button size="lg" className="px-8">
-            Return to Dashboard
-          </Button>
-        </Link>
+      <div className="pt-6 border-t border-surface-200 dark:border-surface-800 flex justify-center">
+        <Button variant="primary" size="lg" onClick={() => navigate('/dashboard')}>
+          Continue to Personalized Learning Path →
+        </Button>
       </div>
     </div>
   );

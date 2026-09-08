@@ -16,6 +16,7 @@ if TYPE_CHECKING:
         LearningPath,
         PracticeAttempt,
     )
+    from app.models.agents import AgentSession
 
 
 class LearningPace(str, enum.Enum):
@@ -95,6 +96,11 @@ class LearnerProfile(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
     practice_attempts: Mapped[List["PracticeAttempt"]] = relationship(
         "PracticeAttempt",
+        back_populates="learner_profile",
+        cascade="all, delete-orphan",
+    )
+    agent_sessions: Mapped[List["AgentSession"]] = relationship(
+        "AgentSession",
         back_populates="learner_profile",
         cascade="all, delete-orphan",
     )

@@ -27,7 +27,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
     setIsLoading(false);
+
+    const handleAuthExpired = () => {
+      setUser(null);
+    };
+    window.addEventListener('sile_auth_expired', handleAuthExpired);
+    return () => window.removeEventListener('sile_auth_expired', handleAuthExpired);
   }, []);
+
 
   const login = (token: string, refreshToken: string, userData: UserSession) => {
     localStorage.setItem('sile_access_token', token);

@@ -9,6 +9,7 @@ import { LandingPage } from '../pages/LandingPage';
 import { LoginPage } from '../pages/auth/LoginPage';
 import { RegisterPage } from '../pages/auth/RegisterPage';
 import { LearningHomePage } from '../pages/learning/LearningHomePage';
+import { AITutorPage } from '../pages/learning/AITutorPage';
 import { SubjectsPage } from '../pages/curriculum/SubjectsPage';
 import { TopicsPage } from '../pages/curriculum/TopicsPage';
 import { ContentViewerPage } from '../pages/content/ContentViewerPage';
@@ -21,7 +22,9 @@ import { PreferencesPage } from '../pages/preferences/PreferencesPage';
 import { AssessmentListPage } from '../pages/assessment/AssessmentListPage';
 import { TakeAssessmentPage } from '../pages/assessment/TakeAssessmentPage';
 import { AssessmentResultsPage } from '../pages/assessment/AssessmentResultsPage';
+import { AgentComparisonPage } from '../pages/evaluation/AgentComparisonPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
+
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -44,6 +47,10 @@ export const AppRoutes: React.FC = () => {
           <Route path="/dashboard" element={<LearningHomePage />} />
           <Route path="/learning" element={<LearningHomePage />} />
 
+          {/* Phase 3 Multi-Agent AI Tutor */}
+          <Route path="/ai-tutor" element={<AITutorPage />} />
+          <Route path="/tutor" element={<Navigate to="/ai-tutor" replace />} />
+
           {/* Phase 2 Curriculum & Content */}
           <Route path="/subjects" element={<SubjectsPage />} />
           <Route path="/topics" element={<TopicsPage />} />
@@ -57,6 +64,10 @@ export const AppRoutes: React.FC = () => {
           <Route path="/learning-paths" element={<Navigate to="/learning-path" replace />} />
           <Route path="/performance" element={<TopicPerformancePage />} />
 
+          {/* Research & Explainability Evaluation */}
+          <Route path="/evaluation" element={<AgentComparisonPage />} />
+          <Route path="/comparison" element={<Navigate to="/evaluation" replace />} />
+
           {/* Phase 1 Foundations */}
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/preferences" element={<PreferencesPage />} />
@@ -69,6 +80,7 @@ export const AppRoutes: React.FC = () => {
           <Route path="/assessment/results" element={<Navigate to="/assessments" replace />} />
         </Route>
       </Route>
+
 
       {/* 404 Route */}
       <Route path="*" element={<NotFoundPage />} />

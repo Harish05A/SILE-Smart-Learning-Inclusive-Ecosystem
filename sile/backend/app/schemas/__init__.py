@@ -34,6 +34,21 @@ from app.schemas.assessment import (
     AssessmentAnswerSubmission,
 )
 from app.schemas.dashboard import DashboardOverviewResponse
+from app.schemas.agents import (
+    AgentSessionCreate,
+    AgentSessionResponse,
+    LearnerContextFrame,
+    WorkedExample,
+    ContentAdaptationResult,
+    AssessmentQuestionResult,
+    AssessmentAgentOutput,
+    AccessibilityAdaptationResult,
+    AgentInteractionResult,
+    MultiAgentResponse,
+    RuleBasedComparisonResult,
+    AgentComparisonEvaluationCreate,
+    AgentComparisonEvaluationResponse,
+)
 
 __all__ = [
     "StandardResponse",
@@ -66,4 +81,17 @@ __all__ = [
     "AssessmentAttemptResponse",
     "AssessmentAnswerSubmission",
     "DashboardOverviewResponse",
+    # Agent schemas
+    "AgentSessionCreate",
+    "AgentSessionResponse",
+    "LearnerContextFrame",
+    "WorkedExample",
+    "ContentAdaptationResult",
+    "AssessmentQuestionResult",
+    "AccessibilityAdaptationResult",
+    "AgentInteractionResult",
+    "MultiAgentResponse",
+    "RuleBasedComparisonResult",
+    "AgentComparisonEvaluationCreate",
+    "AgentComparisonEvaluationResponse",
 ]

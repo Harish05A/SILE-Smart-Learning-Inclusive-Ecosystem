@@ -1,14 +1,19 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
 
-interface AccessibilityContextType {
+export interface AccessibilityContextType {
   fontSizePercent: number; // 90 to 140
   highContrast: boolean;
+  dyslexiaFont: boolean;
+  reducedMotion: boolean;
   textToSpeechEnabled: boolean;
   increaseFontSize: () => void;
   decreaseFontSize: () => void;
   resetFontSize: () => void;
   toggleHighContrast: () => void;
+  toggleDyslexiaFont: () => void;
+  toggleReducedMotion: () => void;
   toggleTextToSpeech: () => void;
+  resetToDefaults: () => void;
   speakText: (text: string) => void;
   stopSpeaking: () => void;
 }
@@ -23,6 +28,14 @@ export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const [highContrast, setHighContrast] = useState<boolean>(() => {
     return localStorage.getItem('sile_a11y_high_contrast') === 'true';
+  });
+
+  const [dyslexiaFont, setDyslexiaFont] = useState<boolean>(() => {
+    return localStorage.getItem('sile_a11y_dyslexia') === 'true';
+  });
+
+  const [reducedMotion, setReducedMotion] = useState<boolean>(() => {
+    return localStorage.getItem('sile_a11y_reduced_motion') === 'true';
   });
 
   const [textToSpeechEnabled, setTextToSpeechEnabled] = useState<boolean>(() => {
@@ -41,6 +54,18 @@ export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({
     root.classList.toggle('theme-high-contrast', highContrast);
     localStorage.setItem('sile_a11y_high_contrast', String(highContrast));
   }, [highContrast]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.toggle('sile-dyslexia', dyslexiaFont);
+    localStorage.setItem('sile_a11y_dyslexia', String(dyslexiaFont));
+  }, [dyslexiaFont]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.toggle('reduce-motion', reducedMotion);
+    localStorage.setItem('sile_a11y_reduced_motion', String(reducedMotion));
+  }, [reducedMotion]);
 
   useEffect(() => {
     localStorage.setItem('sile_a11y_tts', String(textToSpeechEnabled));
@@ -62,6 +87,14 @@ export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({
     setHighContrast((prev) => !prev);
   };
 
+  const toggleDyslexiaFont = () => {
+    setDyslexiaFont((prev) => !prev);
+  };
+
+  const toggleReducedMotion = () => {
+    setReducedMotion((prev) => !prev);
+  };
+
   const toggleTextToSpeech = () => {
     setTextToSpeechEnabled((prev) => {
       const next = !prev;
@@ -70,6 +103,17 @@ export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({
       }
       return next;
     });
+  };
+
+  const resetToDefaults = () => {
+    setFontSizePercent(100);
+    setHighContrast(false);
+    setDyslexiaFont(false);
+    setReducedMotion(false);
+    setTextToSpeechEnabled(false);
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
   };
 
   const speakText = useCallback(
@@ -96,12 +140,17 @@ export const AccessibilityProvider: React.FC<{ children: React.ReactNode }> = ({
       value={{
         fontSizePercent,
         highContrast,
+        dyslexiaFont,
+        reducedMotion,
         textToSpeechEnabled,
         increaseFontSize,
         decreaseFontSize,
         resetFontSize,
         toggleHighContrast,
+        toggleDyslexiaFont,
+        toggleReducedMotion,
         toggleTextToSpeech,
+        resetToDefaults,
         speakText,
         stopSpeaking,
       }}

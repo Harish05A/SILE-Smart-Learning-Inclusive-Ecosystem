@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { assessmentService } from '../../services/assessment.service';
 import { AssessmentListItem } from '../../types/assessment.types';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
-import { ErrorMessage } from '../../components/ui/ErrorMessage';
+import { Badge } from '../../components/ui/Badge';
+import { Skeleton } from '../../components/ui/SkeletonLoader';
+import { EmptyState } from '../../components/ui/EmptyState';
+
 
 export const AssessmentListPage: React.FC = () => {
+  const navigate = useNavigate();
   const [assessments, setAssessments] = useState<AssessmentListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -44,32 +47,37 @@ export const AssessmentListPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-[400px] flex items-center justify-center">
-        <LoadingSpinner size="lg" label="Loading baseline assessments..." />
+      <div className="max-w-4xl mx-auto space-y-6 py-6">
+        <Skeleton className="h-8 w-64 mb-2" />
+        <Skeleton className="h-4 w-96 mb-6" />
+        <Skeleton className="h-40 w-full rounded-xl" />
+        <Skeleton className="h-40 w-full rounded-xl" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 pb-12">
+    <div className="max-w-4xl mx-auto space-y-6 pb-12">
       {/* Header Banner */}
-      <div>
-        <div className="inline-flex items-center space-x-2 px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 mb-2">
-          <span className="h-1.5 w-1.5 rounded-full bg-indigo-600"></span>
-          <span className="text-[11px] uppercase font-semibold text-indigo-700 tracking-wider">
-            Phase 1 Diagnostic
+      <div className="border-b border-surface-200 dark:border-surface-800 pb-5">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-xs font-semibold uppercase tracking-wider text-brand-700 dark:text-brand-300">
+            Diagnostic Readiness
           </span>
+          <Badge variant="brand" size="sm">Baseline Assessment</Badge>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Baseline Assessments</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Evaluate foundational knowledge in core subjects to help SILE adapt difficulty and recommend focus areas.
+        <h1 className="text-2xl sm:text-3xl font-bold text-surface-900 dark:text-white tracking-tight">
+          Baseline Assessments
+        </h1>
+        <p className="text-sm text-surface-600 dark:text-surface-400 mt-1">
+          Evaluate foundational knowledge in core subjects to help SILE calibrate starting difficulty and recommend target modules.
         </p>
       </div>
 
       {/* Non-medical purpose disclaimer */}
-      <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 flex items-start space-x-3">
+      <div className="p-4 bg-surface-50 dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-xl text-xs text-surface-600 dark:text-surface-400 flex items-start space-x-3">
         <svg
-          className="h-5 w-5 text-indigo-600 flex-shrink-0 mt-0.5"
+          className="h-5 w-5 text-brand-600 dark:text-brand-400 flex-shrink-0 mt-0.5"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -82,39 +90,41 @@ export const AssessmentListPage: React.FC = () => {
           />
         </svg>
         <div>
-          <span className="font-semibold text-slate-800">Supportive & Non-Judgmental: </span>
-          This assessment is untimed and solely establishes starting content difficulty. It is not used to diagnose
-          disabilities, medical conditions, or label your intelligence.
+          <span className="font-semibold text-surface-900 dark:text-white">Supportive & Untimed: </span>
+          This assessment solely establishes starting content difficulty. It is not used to diagnose
+          disabilities, medical conditions, or label intelligence.
         </div>
       </div>
 
-      <ErrorMessage message={errorMessage} onDismiss={() => setErrorMessage(null)} />
+      {errorMessage && (
+        <div className="p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 rounded-xl text-xs text-red-700 dark:text-red-300">
+          {errorMessage}
+        </div>
+      )}
 
       {/* Assessment List */}
       <div className="space-y-4">
         {assessments.map((item) => (
-          <Card key={item.id} className="p-6 hover:border-indigo-200 transition-colors">
+          <Card key={item.id} variant="interactive" className="p-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="space-y-2">
+              <div className="space-y-2 flex-1">
                 <div className="flex items-center space-x-2">
-                  <span className="px-2.5 py-0.5 rounded text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">
-                    {item.subject}
-                  </span>
-                  <span className="text-xs text-slate-400">&bull;</span>
-                  <span className="text-xs font-medium text-slate-600">
-                    {item.total_questions} Multiple Choice Questions
+                  <Badge variant="brand" size="sm">{item.subject}</Badge>
+                  <span className="text-xs text-surface-400">&bull;</span>
+                  <span className="text-xs font-medium text-surface-600 dark:text-surface-400">
+                    {item.total_questions} Diagnostic Questions
                   </span>
                 </div>
-                <h2 className="text-lg font-bold text-slate-900">{item.title}</h2>
-                <p className="text-xs text-slate-600 max-w-2xl leading-relaxed">
-                  {item.description || 'Foundational readiness assessment for personalized pacing.'}
+                <h2 className="text-lg font-bold text-surface-900 dark:text-surface-100">{item.title}</h2>
+                <p className="text-xs text-surface-600 dark:text-surface-400 max-w-2xl leading-relaxed">
+                  {item.description || 'Foundational readiness assessment for personalized pacing and scaffolding.'}
                 </p>
                 <div className="flex flex-wrap gap-1.5 pt-1">
                   {['Arithmetic', 'Fractions', 'Percentages', 'Algebra', 'Geometry', 'Patterns'].map(
                     (topic) => (
                       <span
                         key={topic}
-                        className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[11px]"
+                        className="px-2 py-0.5 bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-400 rounded text-[11px]"
                       >
                         {topic}
                       </span>
@@ -124,20 +134,23 @@ export const AssessmentListPage: React.FC = () => {
               </div>
 
               <div className="sm:flex-shrink-0">
-                <Link to={`/assessments/${item.id}`}>
-                  <Button size="md" className="w-full sm:w-auto">
-                    Start Assessment &rarr;
-                  </Button>
-                </Link>
+                <Button
+                  variant="primary"
+                  onClick={() => navigate(`/assessments/${item.id}`)}
+                  className="w-full sm:w-auto"
+                >
+                  Start Assessment →
+                </Button>
               </div>
             </div>
           </Card>
         ))}
 
         {assessments.length === 0 && !errorMessage && (
-          <Card className="text-center py-12">
-            <p className="text-sm text-slate-500">No baseline assessments found at this time.</p>
-          </Card>
+          <EmptyState
+            title="No Baseline Assessments Found"
+            description="Diagnostic assessments will appear here when configured for your curriculum track."
+          />
         )}
       </div>
     </div>

@@ -7,7 +7,7 @@ export const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 15000, // 15-second timeout
+  timeout: 120000, // 120-second timeout for multi-agent LLM pipeline
 });
 
 // Request interceptor to inject JWT bearer token
@@ -78,10 +78,15 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
-      // Clear token if session is expired or revoked
+      // Clear token and user session if expired or revoked
       localStorage.removeItem('sile_access_token');
       localStorage.removeItem('sile_refresh_token');
+      localStorage.removeItem('sile_user');
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('sile_auth_expired'));
+      }
     }
     return Promise.reject(error);
   }
 );
+

@@ -9,6 +9,7 @@ from app.api.v1.endpoints import (
     content,
     learning_paths,
     practice,
+    agents,
 )
 
 api_router = APIRouter()
@@ -34,3 +35,6 @@ api_router.include_router(learning_paths.router, prefix="/learning-paths", tags=
 # Phase 2 Adaptive Practice Endpoints
 api_router.include_router(practice.router, prefix="/practice", tags=["Adaptive Practice"])
 api_router.include_router(practice.router, prefix="/learners/me/practice", tags=["Adaptive Practice"])
+
+# Phase 3 Multi-Agent Intelligence Endpoints
+api_router.include_router(agents.router, prefix="/agents", tags=["Multi-Agent Intelligence"])

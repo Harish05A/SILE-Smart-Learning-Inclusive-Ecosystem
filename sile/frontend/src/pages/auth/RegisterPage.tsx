@@ -76,8 +76,8 @@ export const RegisterPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Create Learner Account</h1>
-        <p className="text-sm text-slate-500 mt-1">Start your inclusive, personalized learning journey</p>
+        <h1 className="text-2xl font-bold tracking-tight text-surface-900 dark:text-white">Create Learner Account</h1>
+        <p className="text-xs sm:text-sm text-surface-600 dark:text-surface-400 mt-1">Start your inclusive, personalized learning journey</p>
       </div>
 
       <ErrorMessage message={errorMessage} onDismiss={() => setErrorMessage(null)} />
@@ -132,14 +132,14 @@ export const RegisterPage: React.FC = () => {
           disabled={isLoading}
         />
 
-        <Button type="submit" className="w-full mt-2" isLoading={isLoading}>
+        <Button type="submit" variant="primary" className="w-full mt-2" isLoading={isLoading}>
           Create Account
         </Button>
       </form>
 
-      <div className="text-center text-sm text-slate-600 border-t border-slate-100 pt-4">
+      <div className="text-center text-xs sm:text-sm text-surface-600 dark:text-surface-400 border-t border-surface-100 dark:border-surface-800 pt-4">
         Already have an account?{' '}
-        <Link to="/login" className="font-semibold text-indigo-600 hover:text-indigo-500">
+        <Link to="/login" className="font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-500">
           Sign in
         </Link>
       </div>

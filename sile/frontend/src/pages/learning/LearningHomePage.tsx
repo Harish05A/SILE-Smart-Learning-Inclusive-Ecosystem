@@ -1,22 +1,42 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 import { adaptiveService } from '../../services/adaptive.service';
 import { dashboardService } from '../../services/dashboard.service';
+import { formatApiErrorMessage } from '../../services/api.client';
 import {
   LearnerPerformanceOverview,
   LearningPath,
   RecommendationItem,
 } from '../../types/adaptive.types';
 import { DashboardOverviewData } from '../../types/dashboard.types';
+import { Card } from '../../components/ui/Card';
+import { Button } from '../../components/ui/Button';
+import { Badge } from '../../components/ui/Badge';
+import { Skeleton, NextStepHeroSkeleton, LessonCardSkeleton } from '../../components/ui/SkeletonLoader';
+import {
+  Sparkles,
+  ArrowRight,
+  Clock,
+  Zap,
+  Compass,
+  Layers,
+  CheckCircle2,
+  BarChart2,
+  BookOpen,
+  Brain,
+} from 'lucide-react';
 
 export const LearningHomePage: React.FC = () => {
-  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
   const [dashboard, setDashboard] = useState<DashboardOverviewData | null>(null);
   const [performance, setPerformance] = useState<LearnerPerformanceOverview | null>(null);
   const [recommendations, setRecommendations] = useState<RecommendationItem[]>([]);
   const [activePath, setActivePath] = useState<LearningPath | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isAuthError, setIsAuthError] = useState(false);
 
   useEffect(() => {
     loadLearningData();
@@ -30,19 +50,26 @@ export const LearningHomePage: React.FC = () => {
       const [dashData, perfData, recData, pathsData] = await Promise.all([
         dashboardService.getOverview(),
         adaptiveService.getPerformance(),
-        adaptiveService.getRecommendations(3),
+        adaptiveService.getRecommendations(4),
         adaptiveService.getLearningPaths(),
       ]);
 
       setDashboard(dashData);
       setPerformance(perfData);
       setRecommendations(recData.recommendations || []);
-      
-      const inProgressPath = pathsData.find((p) => p.status === 'in_progress') || pathsData[0] || null;
+
+      const inProgressPath =
+        pathsData.find((p) => p.status === 'in_progress') || pathsData[0] || null;
       setActivePath(inProgressPath);
     } catch (err: any) {
       console.error('Failed to load learning home data:', err);
-      setError(err.message || 'Unable to load adaptive learning dashboard. Please try again.');
+      const isUnauthorized = err?.response?.status === 401;
+      setIsAuthError(isUnauthorized);
+      setError(
+        isUnauthorized
+          ? 'Your authentication session has expired. Please sign in again with your learner account.'
+          : formatApiErrorMessage(err)
+      );
     } finally {
       setLoading(false);
     }
@@ -54,7 +81,7 @@ export const LearningHomePage: React.FC = () => {
       const newPath = await adaptiveService.generateLearningPath();
       setActivePath(newPath);
     } catch (err: any) {
-      setError(err.message || 'Failed to generate learning path.');
+      setError(formatApiErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -62,263 +89,413 @@ export const LearningHomePage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-20">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+      <div className="space-y-8 max-w-5xl mx-auto animate-fadeIn">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-64 rounded-xl" />
+          <Skeleton className="h-4 w-96 rounded-lg" />
+        </div>
+        <NextStepHeroSkeleton />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Skeleton className="h-28 rounded-2xl" />
+          <Skeleton className="h-28 rounded-2xl" />
+          <Skeleton className="h-28 rounded-2xl" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <LessonCardSkeleton />
+          <LessonCardSkeleton />
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 text-red-700 p-6 rounded-xl max-w-2xl mx-auto my-8">
-        <h2 className="text-lg font-semibold mb-2">Error Loading Learning Home</h2>
-        <p className="mb-4">{error}</p>
-        <button
-          onClick={loadLearningData}
-          className="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors"
-        >
-          Try Again
-        </button>
+      <div className="p-8 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-200 rounded-3xl max-w-2xl mx-auto my-8 space-y-4">
+        <h2 className="text-lg font-bold text-rose-900 dark:text-rose-100">
+          {isAuthError ? 'Authentication Required' : 'Unable to Load Learning Dashboard'}
+        </h2>
+        <p className="text-sm text-rose-700 dark:text-rose-300 leading-relaxed">{error}</p>
+        <div className="flex items-center gap-3 pt-2">
+          {isAuthError ? (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                logout();
+                window.location.href = '/login';
+              }}
+            >
+              Sign In Again →
+            </Button>
+          ) : (
+            <Button variant="danger" size="sm" onClick={loadLearningData}>
+              Try Again
+            </Button>
+          )}
+        </div>
       </div>
     );
   }
 
+
   const topRecommendation = recommendations[0];
-  const nextPathItem = activePath?.items.find((item) => item.status === 'in_progress') || activePath?.items.find((item) => item.status === 'pending');
+  const otherRecommendations = recommendations.slice(1);
+  const pathItems = activePath?.items || [];
+  const completedPathItems = pathItems.filter((i) => i.status === 'completed');
+  const pathCompletionPct =
+    pathItems.length > 0 ? Math.round((completedPathItems.length / pathItems.length) * 100) : 0;
+
+  const getPriorityBadgeVariant = (priority: string) => {
+    if (priority === 'urgent') return 'danger';
+    if (priority === 'high') return 'warning';
+    return 'brand';
+  };
 
   return (
-    <div className="space-y-8">
-      {/* Welcome & Overall Status Banner */}
-      <header className="bg-gradient-to-r from-indigo-700 via-indigo-600 to-purple-600 rounded-2xl p-6 sm:p-8 text-white shadow-lg">
-        <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
-          <div>
-            <span className="inline-block px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-semibold uppercase tracking-wider mb-2">
-              Phase 2 Adaptive Learning Engine
+    <div className="space-y-8 max-w-5xl mx-auto pb-16 animate-fadeIn">
+      {/* 1. Calm Human-Centered Welcome Header */}
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-6">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-brand-600 bg-brand-50 px-2.5 py-0.5 rounded-md border border-brand-200/60">
+              Personalized Learning Path
             </span>
-            <h1 className="text-2xl sm:text-3xl font-bold">
-              Welcome back, {performance?.full_name || 'Learner'}!
-            </h1>
-            <p className="text-indigo-100 text-sm mt-1">
-              Your personalized curriculum is calibrated to your unique mastery pace.
-            </p>
           </div>
-          <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md p-3 rounded-xl border border-white/20 self-start md:self-auto">
-            <div className="text-right">
-              <div className="text-xs text-indigo-200 font-medium">Assessed Level</div>
-              <div className="text-lg font-bold text-white">
-                {dashboard?.latest_assessment?.learning_level || 'Proficient'}
-              </div>
-            </div>
-            <div className="h-10 w-10 bg-indigo-500 rounded-full flex items-center justify-center font-bold text-lg shadow-inner">
-              🎯
-            </div>
-          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            Welcome back, {performance?.full_name || user?.learner_profile?.full_name || 'Learner'}
+          </h1>
+
+
+          <p className="text-xs sm:text-sm text-slate-500 max-w-xl">
+            SILE monitors your mastery trajectory and prepares step-by-step learning modules aligned with your pace.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <Link to="/ai-tutor">
+            <Button variant="subtle" size="sm" className="shadow-xs">
+              <Sparkles className="w-3.5 h-3.5 text-brand-600" />
+              <span>AI Tutor</span>
+            </Button>
+          </Link>
+          <Link to="/topics">
+            <Button variant="outline" size="sm">
+              <Compass className="w-3.5 h-3.5 text-slate-600" />
+              <span>Explore</span>
+            </Button>
+          </Link>
         </div>
       </header>
 
-      {/* Recommended Next Activity Spotlight */}
-      {topRecommendation && (
-        <section aria-labelledby="spotlight-heading" className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
-          <div className="flex items-center gap-2 text-indigo-600 font-semibold text-sm mb-3">
-            <span className="text-lg">⭐</span>
-            <span id="spotlight-heading">Recommended Next Activity</span>
-            <span className={`ml-auto px-2.5 py-0.5 text-xs font-bold rounded-full uppercase ${
-              topRecommendation.priority === 'urgent' ? 'bg-red-100 text-red-700' :
-              topRecommendation.priority === 'high' ? 'bg-amber-100 text-amber-700' :
-              'bg-indigo-100 text-indigo-700'
-            }`}>
-              {topRecommendation.priority} Priority
-            </span>
-          </div>
-          
-          <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 bg-slate-50 p-5 rounded-xl border border-slate-100">
-            <div className="space-y-1">
-              <div className="text-xs font-medium text-slate-500 uppercase tracking-wide">
-                Topic: {topRecommendation.topic_name} • {topRecommendation.estimated_duration_minutes} mins • {topRecommendation.difficulty}
+      {/* 2. Dominant Focal Point: "Your Next Step" Hero Card */}
+      {topRecommendation ? (
+        <section aria-labelledby="next-step-heading">
+          <div className="bg-gradient-to-br from-brand-900 via-slate-900 to-brand-950 rounded-3xl p-6 sm:p-8 text-white shadow-card relative overflow-hidden border border-brand-800/40">
+            <div className="relative z-10 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Badge variant="brand" className="bg-brand-500/20 text-brand-200 border-brand-400/30">
+                    Your Next Step
+                  </Badge>
+                  <span className="text-xs text-slate-300 font-medium">
+                    Topic: {topRecommendation.topic_name}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-slate-300">
+                  <Clock className="w-3.5 h-3.5 text-brand-300" />
+                  <span>~{topRecommendation.estimated_duration_minutes || 15} mins</span>
+                </div>
               </div>
-              <h3 className="text-xl font-bold text-slate-900">
-                {topRecommendation.content_title || 'Foundational Review Lesson'}
-              </h3>
-              <p className="text-sm text-slate-600 italic">
-                "{topRecommendation.reason}"
-              </p>
+
+              <div className="space-y-2">
+                <h2 id="next-step-heading" className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+                  {topRecommendation.content_title || `Explore ${topRecommendation.topic_name}`}
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-2xl">
+                  {topRecommendation.reason ||
+                    'This module is tailored to reinforce key skills and build conceptual confidence.'}
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-2 flex flex-wrap items-center gap-3">
+                {topRecommendation.content_id ? (
+                  <Link to={`/content/${topRecommendation.content_id}`}>
+                    <Button
+                      variant="primary"
+                      size="md"
+                      className="bg-brand-500 hover:bg-brand-400 text-white font-bold shadow-md"
+                    >
+                      <span>Continue Lesson</span>
+                      <ArrowRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link to={`/practice/${topRecommendation.topic_id}`}>
+                    <Button
+                      variant="primary"
+                      size="md"
+                      className="bg-brand-500 hover:bg-brand-400 text-white font-bold shadow-md"
+                    >
+                      <span>Start Practice</span>
+                      <Zap className="w-4 h-4 ml-1" />
+                    </Button>
+                  </Link>
+                )}
+
+                <Link
+                  to={`/ai-tutor?topic_id=${topRecommendation.topic_id}${
+                    topRecommendation.content_id ? `&content_id=${topRecommendation.content_id}` : ''
+                  }`}
+                >
+                  <Button
+                    variant="outline"
+                    size="md"
+                    className="bg-white/10 hover:bg-white/20 text-white border-white/20"
+                  >
+                    <Sparkles className="w-4 h-4 text-brand-300 mr-1.5" />
+                    <span>Adapt with AI Tutor</span>
+                  </Button>
+                </Link>
+              </div>
             </div>
-            {topRecommendation.content_id && (
-              <button
-                onClick={() => navigate(`/content/${topRecommendation.content_id}`)}
-                className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-md transition-all flex-shrink-0"
-              >
-                Start Lesson →
-              </button>
-            )}
           </div>
         </section>
+      ) : (
+        <Card variant="elevated" padding="lg">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="space-y-1 text-center sm:text-left">
+              <h2 className="text-lg font-bold text-slate-900">Ready to begin learning?</h2>
+              <p className="text-xs sm:text-sm text-slate-500">
+                Generate your personalized learning path or explore curriculum topics.
+              </p>
+            </div>
+            <Button variant="primary" onClick={handleGeneratePath}>
+              Generate Learning Path
+            </Button>
+          </div>
+        </Card>
       )}
 
-      {/* Grid: Active Learning Path & Mastery Summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Active Learning Path Column (2 cols) */}
-        <section aria-labelledby="path-heading" className="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h2 id="path-heading" className="text-lg font-bold text-slate-900">
-                My Active Learning Path
-              </h2>
-              <p className="text-xs text-slate-500">
-                {activePath?.title || 'Personalized Mathematics Mastery Path'}
-              </p>
-            </div>
-            {activePath && (
-              <span className="text-sm font-semibold text-indigo-600">
-                {activePath.completed_items}/{activePath.total_items} Completed ({activePath.progress_percentage}%)
-              </span>
-            )}
+      {/* 3. Learning Journey Progression Map */}
+      <section aria-labelledby="journey-heading" className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Layers className="w-4 h-4 text-brand-600" />
+            <h2 id="journey-heading" className="text-base font-bold text-slate-900">
+              Active Learning Journey
+            </h2>
+          </div>
+          <Link
+            to="/learning-path"
+            className="text-xs font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1"
+          >
+            <span>Full Path</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        <Card variant="default" padding="md" className="space-y-4">
+          <div className="flex items-center justify-between text-xs text-slate-600">
+            <span className="font-semibold">{activePath?.title || 'Foundational Path'}</span>
+            <span>
+              {completedPathItems.length} of {pathItems.length} milestones complete ({pathCompletionPct}%)
+            </span>
           </div>
 
-          {activePath ? (
-            <>
-              {/* Progress bar */}
-              <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
-                <div
-                  className="bg-indigo-600 h-3 rounded-full transition-all duration-500"
-                  style={{ width: `${activePath.progress_percentage}%` }}
-                ></div>
-              </div>
+          {/* Progress Bar */}
+          <div
+            className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200"
+            role="progressbar"
+            aria-valuenow={pathCompletionPct}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label="Learning path progress"
+          >
+            <div
+              className="bg-brand-600 h-2 rounded-full transition-all duration-500 ease-out"
+              style={{ width: `${pathCompletionPct}%` }}
+            />
+          </div>
 
-              {/* Next Step Highlight Card */}
-              {nextPathItem && (
-                <div className="p-4 bg-indigo-50/60 rounded-xl border border-indigo-100 flex justify-between items-center gap-4">
-                  <div>
-                    <span className="text-xs font-bold text-indigo-700 uppercase">
-                      Next Step #{nextPathItem.sequence_number}
+          {/* Milestone Step Previews */}
+          {pathItems.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+              {pathItems.slice(0, 3).map((item, idx) => (
+                <div
+                  key={item.id || idx}
+                  className={`p-3.5 rounded-xl border text-xs space-y-1.5 transition-colors ${
+                    item.status === 'completed'
+                      ? 'bg-emerald-50/60 border-emerald-200 text-emerald-900'
+                      : item.status === 'in_progress'
+                      ? 'bg-brand-50/70 border-brand-200 text-brand-900 ring-1 ring-brand-300'
+                      : 'bg-slate-50 border-slate-200 text-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-[11px] uppercase tracking-wider">
+                      Step {item.sequence_number}
                     </span>
-                    <h4 className="font-semibold text-slate-900 text-base">
-                      {nextPathItem.content_title}
-                    </h4>
-                    <p className="text-xs text-slate-500">
-                      {nextPathItem.topic_name} • {nextPathItem.estimated_duration_minutes} mins • {nextPathItem.difficulty}
-                    </p>
+                    {item.status === 'completed' ? (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    ) : item.status === 'in_progress' ? (
+                      <span className="w-2 h-2 rounded-full bg-brand-600 animate-ping" />
+                    ) : (
+                      <span className="text-slate-400">⏱️</span>
+                    )}
                   </div>
-                  <button
-                    onClick={() => navigate(`/content/${nextPathItem.content_id}?path_id=${activePath.id}&item_id=${nextPathItem.id}`)}
-                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-lg shadow-sm"
-                  >
-                    Continue →
-                  </button>
-                </div>
-              )}
-
-              <div className="flex justify-between items-center pt-2">
-                <Link
-                  to="/learning-path"
-                  className="text-sm font-semibold text-indigo-600 hover:text-indigo-800"
-                >
-                  View Full Step-by-Step Path ({activePath.total_items} steps) →
-                </Link>
-                <button
-                  onClick={handleGeneratePath}
-                  className="text-xs text-slate-500 hover:text-slate-700 underline"
-                >
-                  Regenerate Path
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-8 space-y-3">
-              <p className="text-sm text-slate-600">
-                You don't have an active learning path yet.
-              </p>
-              <button
-                onClick={handleGeneratePath}
-                className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-sm shadow-md"
-              >
-                Generate My Personalized Path
-              </button>
-            </div>
-          )}
-        </section>
-
-        {/* Topic Health & Weak Topics (1 col) */}
-        <section aria-labelledby="weak-heading" className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
-          <h2 id="weak-heading" className="text-lg font-bold text-slate-900">
-            Target Focus Topics
-          </h2>
-
-          {performance?.weak_topics && performance.weak_topics.length > 0 ? (
-            <div className="space-y-3">
-              {performance.weak_topics.map((t) => (
-                <div
-                  key={t.topic_id}
-                  className="p-3 bg-red-50/70 border border-red-100 rounded-xl"
-                >
-                  <div className="flex justify-between items-center text-xs font-semibold mb-1">
-                    <span className="text-red-800 font-bold">{t.topic_name}</span>
-                    <span className="text-red-700">{t.accuracy}% Acc</span>
-                  </div>
-                  <div className="w-full bg-red-200 rounded-full h-1.5 overflow-hidden">
-                    <div
-                      className="bg-red-600 h-1.5 rounded-full"
-                      style={{ width: `${t.mastery_percentage}%` }}
-                    ></div>
-                  </div>
-                  <div className="text-[11px] text-red-600 mt-1">
-                    Needs reinforcement • {t.current_difficulty} level
-                  </div>
+                  <p className="font-semibold truncate">{item.topic_name}</p>
+                  <p className="text-[11px] opacity-80 capitalize">{item.status.replace('_', ' ')}</p>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-xl text-emerald-800 text-xs">
-              🎉 Outstanding! No weak topic gaps detected. All tested concepts are at developing or proficient level.
-            </div>
+            <p className="text-xs text-slate-500 text-center py-2">
+              No active learning path items yet. Click &quot;Full Path&quot; to generate your roadmap.
+            </p>
           )}
+        </Card>
+      </section>
 
-          <div className="pt-2 border-t border-slate-100">
+      {/* 4. Progress Summary (3 Meaningful Indicators) */}
+      <section aria-labelledby="progress-summary-heading" className="space-y-3">
+        <div className="flex items-center gap-2">
+          <BarChart2 className="w-4 h-4 text-brand-600" />
+          <h2 id="progress-summary-heading" className="text-base font-bold text-slate-900">
+            Progress & Understanding
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* Overall Mastery Card */}
+          <Card variant="default" padding="sm" className="space-y-1">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              Overall Mastery
+            </span>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-extrabold text-slate-900">
+                {Math.round((performance?.overall_mastery || 0) * 100)}%
+              </span>
+              <Badge variant="brand" size="sm">
+                {dashboard?.latest_assessment?.learning_level || 'Developing'}
+              </Badge>
+            </div>
+            <p className="text-[11px] text-slate-500">Calculated across baseline & practice</p>
+          </Card>
+
+          {/* Topics Explored */}
+          <Card variant="default" padding="sm" className="space-y-1">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              Concepts Explored
+            </span>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-extrabold text-slate-900">
+                {performance?.all_topics?.length || 5}
+              </span>
+              <span className="text-xs font-medium text-slate-500">Curriculum topics</span>
+            </div>
+            <p className="text-[11px] text-slate-500">
+              {performance?.strong_topics?.length || 0} strong • {performance?.developing_topics?.length || 0} developing
+            </p>
+          </Card>
+
+          {/* Practice Questions Attempted */}
+          <Card variant="default" padding="sm" className="space-y-1">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              Practice Questions
+            </span>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-extrabold text-slate-900">
+                {performance?.total_questions_attempted || 0}
+              </span>
+              <span className="text-xs font-medium text-slate-500">
+                ({Math.round(performance?.overall_accuracy || 0)}% accuracy)
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500">Adaptive calibrated practice questions</p>
+          </Card>
+        </div>
+      </section>
+
+      {/* 5. Continue Learning & Recommended Modules */}
+      {otherRecommendations.length > 0 && (
+        <section aria-labelledby="recommended-modules-heading" className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 id="recommended-modules-heading" className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-brand-600" />
+              <span>Recommended Next Topics</span>
+            </h2>
             <Link
-              to="/performance"
-              className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center justify-between"
+              to="/recommendations"
+              className="text-xs font-semibold text-brand-600 hover:text-brand-700 flex items-center gap-1"
             >
-              <span>View All 5 Topic Mastery Breakdown</span>
-              <span>→</span>
+              <span>View All</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
-        </section>
-      </div>
 
-      {/* Quick Navigation Cards */}
-      <section aria-label="Curriculum Shortcuts" className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <Link
-          to="/subjects"
-          className="p-5 bg-white rounded-xl border border-slate-200 hover:border-indigo-400 hover:shadow-md transition-all group"
-        >
-          <div className="text-2xl mb-2">📚</div>
-          <h3 className="font-bold text-slate-900 group-hover:text-indigo-600">Curriculum Subjects</h3>
-          <p className="text-xs text-slate-500 mt-1">Explore mathematics curriculum topics & skills</p>
-        </Link>
-        <Link
-          to="/recommendations"
-          className="p-5 bg-white rounded-xl border border-slate-200 hover:border-indigo-400 hover:shadow-md transition-all group"
-        >
-          <div className="text-2xl mb-2">💡</div>
-          <h3 className="font-bold text-slate-900 group-hover:text-indigo-600">Recommendations</h3>
-          <p className="text-xs text-slate-500 mt-1">Prioritized lessons based on your accuracy</p>
-        </Link>
-        <Link
-          to="/learning-path"
-          className="p-5 bg-white rounded-xl border border-slate-200 hover:border-indigo-400 hover:shadow-md transition-all group"
-        >
-          <div className="text-2xl mb-2">🗺️</div>
-          <h3 className="font-bold text-slate-900 group-hover:text-indigo-600">Learning Path</h3>
-          <p className="text-xs text-slate-500 mt-1">Step-by-step sequential lesson milestones</p>
-        </Link>
-        <Link
-          to="/performance"
-          className="p-5 bg-white rounded-xl border border-slate-200 hover:border-indigo-400 hover:shadow-md transition-all group"
-        >
-          <div className="text-2xl mb-2">📊</div>
-          <h3 className="font-bold text-slate-900 group-hover:text-indigo-600">Mastery Analytics</h3>
-          <p className="text-xs text-slate-500 mt-1">Topic-level accuracy and mastery indicators</p>
-        </Link>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {otherRecommendations.map((rec) => (
+              <Card key={rec.id} variant="interactive" padding="md" className="space-y-3 flex flex-col justify-between">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <Badge variant={getPriorityBadgeVariant(rec.priority)} size="sm">
+                      {rec.priority} priority
+                    </Badge>
+                    <span className="text-xs text-slate-400">⏱️ ~{rec.estimated_duration_minutes}m</span>
+                  </div>
+
+                  <h3 className="font-bold text-slate-900 text-sm sm:text-base">{rec.topic_name}</h3>
+                  <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                    {rec.reason}
+                  </p>
+                </div>
+
+
+                <div className="pt-2 flex items-center justify-between border-t border-slate-100">
+                  <span className="text-xs text-slate-500 capitalize">{rec.difficulty} difficulty</span>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      to={`/practice/${rec.topic_id}`}
+                      className="text-xs font-semibold text-brand-600 hover:text-brand-700"
+                    >
+                      Practice ➔
+                    </Link>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 6. Contextual AI Tutor Invitation Card */}
+      <section aria-labelledby="ai-support-heading">
+        <div className="p-6 rounded-3xl bg-slate-900 text-white border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-brand-300">
+              <Brain className="w-4 h-4 text-brand-400" />
+              <span id="ai-support-heading">Multi-Agent AI Tutor</span>
+            </div>
+            <h3 className="text-base sm:text-lg font-bold text-white">
+              Need a personalized breakdown or step-by-step example?
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-400 max-w-xl">
+              SILE adapts explanations, designs worked examples, and synthesizes formative checkpoints for any topic.
+            </p>
+          </div>
+
+          <Link to="/ai-tutor" className="flex-shrink-0 self-stretch sm:self-auto">
+            <Button
+              variant="primary"
+              size="md"
+              className="w-full sm:w-auto bg-brand-500 hover:bg-brand-400 text-white font-bold"
+            >
+              <Sparkles className="w-4 h-4 mr-1.5" />
+              <span>Launch AI Tutor</span>
+            </Button>
+          </Link>
+        </div>
       </section>
     </div>
   );

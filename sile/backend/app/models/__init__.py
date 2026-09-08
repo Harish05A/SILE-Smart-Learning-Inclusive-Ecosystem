@@ -34,6 +34,17 @@ from app.models.adaptive import (
 )
 from app.models.practice import PracticeQuestion
 
+# Phase 3 Multi-Agent Data Models & Enums
+from app.models.agents import (
+    AgentSession,
+    AgentInteraction,
+    AgentComparisonEvaluation,
+    SessionType,
+    SessionStatus,
+    AgentName,
+    InteractionStatus,
+)
+
 __all__ = [
     # Phase 1
     "User",
@@ -67,4 +78,12 @@ __all__ = [
     "RecommendationStatus",
     "LearningPathStatus",
     "PathItemStatus",
+    # Phase 3 Multi-Agent
+    "AgentSession",
+    "AgentInteraction",
+    "AgentComparisonEvaluation",
+    "SessionType",
+    "SessionStatus",
+    "AgentName",
+    "InteractionStatus",
 ]

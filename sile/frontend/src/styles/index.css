@@ -5,21 +5,22 @@
 @layer base {
   :root {
     --font-scale: 100%;
-    --content-line-height: 1.6;
+    --content-line-height: 1.625;
   }
 
   html {
     font-size: var(--font-scale);
+    scroll-behavior: smooth;
   }
 
   body {
     line-height: var(--content-line-height);
-    @apply antialiased text-slate-900 bg-slate-50;
+    @apply antialiased text-slate-800 bg-slate-50 font-sans selection:bg-brand-100 selection:text-brand-900;
   }
 
   /* Universal high-visibility keyboard focus indicator */
   :focus-visible {
-    outline: 2px solid #4f46e5 !important;
+    outline: 2px solid #3b82f6 !important;
     outline-offset: 2px !important;
   }
 
@@ -38,9 +39,11 @@
   .theme-high-contrast nav,
   .theme-high-contrast header,
   .theme-high-contrast footer,
+  .theme-high-contrast aside,
   .theme-high-contrast div[class*="bg-white"],
   .theme-high-contrast div[class*="bg-slate-"],
   .theme-high-contrast section[class*="bg-white"],
+  .theme-high-contrast section[class*="bg-slate-"],
   .theme-high-contrast form[class*="bg-white"] {
     background-color: #121212 !important;
     color: #ffffff !important;
@@ -59,8 +62,10 @@
     color: #ffffff !important;
   }
 
-  .theme-high-contrast button[class*="bg-indigo-600"],
-  .theme-high-contrast a[class*="bg-indigo-600"] {
+  .theme-high-contrast button[class*="bg-brand-"],
+  .theme-high-contrast button[class*="bg-indigo-"],
+  .theme-high-contrast a[class*="bg-brand-"],
+  .theme-high-contrast a[class*="bg-indigo-"] {
     background-color: #ffff00 !important;
     color: #000000 !important;
     font-weight: 700 !important;
@@ -92,18 +97,41 @@
     position: absolute;
     top: -100px;
     left: 1rem;
-    background: #4f46e5;
+    background: #1e40af;
     color: #ffffff;
     padding: 0.75rem 1.25rem;
     z-index: 9999;
     border-radius: 0.5rem;
     font-weight: 700;
     font-size: 0.875rem;
-    transition: top 0.2s ease-in-out;
+    transition: top 0.15s ease-in-out;
   }
 
   .skip-link:focus {
     top: 1rem;
-    outline: 3px solid #ffff00;
+    outline: 3px solid #ffff00 !important;
+  }
+}
+
+@layer components {
+  /* Subtle educational reading prose container */
+  .sile-prose {
+    @apply text-slate-800 leading-relaxed text-base font-normal;
+  }
+
+  .sile-prose p {
+    @apply mb-4 last:mb-0;
+  }
+
+  .sile-prose h3 {
+    @apply text-lg font-bold text-slate-900 mt-6 mb-2 first:mt-0;
+  }
+
+  .sile-prose ul {
+    @apply list-disc list-inside space-y-1 mb-4 text-slate-700;
+  }
+
+  .sile-prose ol {
+    @apply list-decimal list-inside space-y-1 mb-4 text-slate-700;
   }
 }

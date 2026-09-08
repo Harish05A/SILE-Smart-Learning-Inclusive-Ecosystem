@@ -5,8 +5,9 @@ import { AssessmentDetail } from '../../types/assessment.types';
 import { useAccessibility } from '../../hooks/useAccessibility';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { LoadingSpinner } from '../../components/ui/LoadingSpinner';
-import { ErrorMessage } from '../../components/ui/ErrorMessage';
+import { Badge } from '../../components/ui/Badge';
+import { Skeleton } from '../../components/ui/SkeletonLoader';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 export const TakeAssessmentPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -86,18 +87,26 @@ export const TakeAssessmentPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-[400px] flex items-center justify-center">
-        <LoadingSpinner size="lg" label="Loading assessment questions..." />
+      <div className="max-w-3xl mx-auto space-y-6 py-6">
+        <Skeleton className="h-8 w-64 mb-2" />
+        <Skeleton className="h-4 w-96 mb-6" />
+        <Skeleton className="h-16 w-full rounded-xl" />
+        <Skeleton className="h-80 w-full rounded-2xl" />
       </div>
     );
   }
 
   if (!assessment || !assessment.questions || assessment.questions.length === 0) {
     return (
-      <div className="max-w-xl mx-auto text-center py-12 space-y-4">
-        <ErrorMessage message={errorMessage || 'Assessment questions not found.'} />
-        <Button onClick={() => navigate('/assessments')}>Back to Assessments</Button>
-      </div>
+      <EmptyState
+        title="Assessment Questions Not Found"
+        description={errorMessage || 'Unable to locate questions for this baseline assessment.'}
+        action={
+          <Button variant="primary" onClick={() => navigate('/assessments')}>
+            Back to Assessments
+          </Button>
+        }
+      />
     );
   }
 
@@ -157,28 +166,28 @@ export const TakeAssessmentPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 pb-12">
+    <div className="max-w-3xl mx-auto space-y-6 pb-12 animate-fade-in">
       {/* Header & Meta */}
-      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-200 pb-4">
+      <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-surface-200 dark:border-surface-800 pb-4">
         <div>
-          <span className="text-xs uppercase font-semibold text-indigo-600 tracking-wider">
-            {assessment.subject} Baseline Diagnostic
-          </span>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900">{assessment.title}</h1>
+          <div className="flex items-center gap-2 mb-1">
+            <Badge variant="brand" size="sm">{assessment.subject}</Badge>
+            <span className="text-xs text-surface-500 font-medium">Diagnostic Calibration</span>
+          </div>
+          <h1 className="text-xl sm:text-2xl font-bold text-surface-900 dark:text-white">{assessment.title}</h1>
         </div>
 
         <div className="flex items-center space-x-3">
-          <button
-            type="button"
+          <Button
+            variant="subtle"
+            size="sm"
             onClick={handleReadQuestion}
-            className="text-xs font-semibold px-2.5 py-1 rounded bg-indigo-50 text-indigo-700 hover:bg-indigo-100 flex items-center space-x-1 focus-visible:ring-2 focus-visible:ring-indigo-600"
-            title="Read question aloud"
             aria-label="Read active question aloud"
           >
-            <span aria-hidden="true">🔊</span>
+            <span aria-hidden="true" className="mr-1.5">🔊</span>
             <span>Listen</span>
-          </button>
-          <div className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700">
+          </Button>
+          <div className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-surface-100 dark:bg-surface-800 text-surface-700 dark:text-surface-300">
             Answered: {answeredCount} / {totalQuestions}
           </div>
         </div>
@@ -186,12 +195,12 @@ export const TakeAssessmentPage: React.FC = () => {
 
       {/* Progress Bar with ARIA */}
       <div className="space-y-1.5" role="region" aria-label="Assessment progress">
-        <div className="flex justify-between text-xs text-slate-500 font-medium">
+        <div className="flex justify-between text-xs text-surface-500 font-medium">
           <span>Question {currentIndex + 1} of {totalQuestions}</span>
           <span>{progressPercent}% Completed</span>
         </div>
         <div
-          className="w-full h-2.5 bg-slate-200 rounded-full overflow-hidden"
+          className="w-full h-2 bg-surface-100 dark:bg-surface-800 rounded-full overflow-hidden"
           role="progressbar"
           aria-valuenow={progressPercent}
           aria-valuemin={0}
@@ -199,7 +208,7 @@ export const TakeAssessmentPage: React.FC = () => {
           aria-label={`Question ${currentIndex + 1} of ${totalQuestions}`}
         >
           <div
-            className="h-full bg-indigo-600 rounded-full transition-all duration-300"
+            className="h-full bg-brand-600 rounded-full transition-all duration-300"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
@@ -216,12 +225,12 @@ export const TakeAssessmentPage: React.FC = () => {
               key={q.id}
               type="button"
               onClick={() => setCurrentIndex(idx)}
-              className={`h-8 w-8 rounded-lg text-xs font-bold transition-colors focus-visible:ring-2 focus-visible:ring-indigo-600 ${
+              className={`h-8 w-8 rounded-lg text-xs font-bold transition-colors focus-visible:ring-2 focus-visible:ring-brand-500 ${
                 isCurrent
-                  ? 'bg-indigo-600 text-white shadow-xs'
+                  ? 'bg-brand-600 text-white shadow-xs'
                   : isAnswered
-                  ? 'bg-indigo-100 text-indigo-800 border border-indigo-200'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  ? 'bg-brand-50 dark:bg-brand-950/60 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800'
+                  : 'bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-400 hover:bg-surface-200 dark:hover:bg-surface-700'
               }`}
               aria-current={isCurrent ? 'step' : undefined}
               aria-label={`Question ${idx + 1}${isAnswered ? ' (Answered)' : ' (Not answered)'}`}
@@ -232,22 +241,26 @@ export const TakeAssessmentPage: React.FC = () => {
         })}
       </nav>
 
-      <ErrorMessage message={errorMessage} onDismiss={() => setErrorMessage(null)} />
+      {errorMessage && (
+        <div className="p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 rounded-xl text-xs text-red-700 dark:text-red-300">
+          {errorMessage}
+        </div>
+      )}
 
-      {/* Active Question Card with Live Region */}
-      <Card className="p-6 sm:p-8 space-y-6">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-          <span className="text-xs font-semibold uppercase text-slate-500 tracking-wider">
-            Question {currentQuestion.order_number || currentIndex + 1}
+      {/* Active Question Card */}
+      <Card variant="elevated" className="p-6 sm:p-8 space-y-6">
+        <div className="flex items-center justify-between border-b border-surface-100 dark:border-surface-800 pb-3">
+          <span className="text-xs font-semibold uppercase text-surface-400 tracking-wider">
+            Question #{currentQuestion.order_number || currentIndex + 1}
           </span>
-          <span className="text-[11px] px-2.5 py-0.5 rounded capitalize bg-slate-100 text-slate-600 font-medium">
+          <Badge variant="neutral" size="sm">
             Difficulty: {currentQuestion.difficulty}
-          </span>
+          </Badge>
         </div>
 
         <h2
           id="active-question-text"
-          className="text-lg sm:text-xl font-medium text-slate-900 leading-relaxed"
+          className="text-lg sm:text-xl font-medium text-surface-900 dark:text-white leading-relaxed"
         >
           {currentQuestion.question_text}
         </h2>
@@ -274,23 +287,23 @@ export const TakeAssessmentPage: React.FC = () => {
                 tabIndex={0}
                 role="radio"
                 aria-checked={isSelected}
-                className={`flex items-center p-4 rounded-xl border-2 cursor-pointer transition-all focus-visible:ring-2 focus-visible:ring-indigo-600 ${
+                className={`flex items-center p-4 rounded-xl border transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-brand-500 ${
                   isSelected
-                    ? 'border-indigo-600 bg-indigo-50/50 shadow-xs'
-                    : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50/50'
+                    ? 'border-brand-600 bg-brand-50/70 dark:bg-brand-950/40 text-brand-950 dark:text-brand-100 font-semibold ring-2 ring-brand-200 dark:ring-brand-800/80 shadow-sm'
+                    : 'border-surface-200 dark:border-surface-750 hover:border-brand-300 dark:hover:border-brand-700 hover:bg-surface-50 dark:hover:bg-surface-800/60 text-surface-800 dark:text-surface-200'
                 }`}
               >
                 <div
                   className={`h-7 w-7 rounded-full flex items-center justify-center font-bold text-xs mr-3.5 transition-colors ${
                     isSelected
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-slate-100 text-slate-600 border border-slate-300'
+                      ? 'bg-brand-600 text-white'
+                      : 'bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-400'
                   }`}
                   aria-hidden="true"
                 >
                   {option.key}
                 </div>
-                <span className="text-sm font-medium text-slate-800 flex-1">{option.text}</span>
+                <span className="text-sm font-medium flex-1">{option.text}</span>
               </div>
             );
           })}
@@ -300,18 +313,18 @@ export const TakeAssessmentPage: React.FC = () => {
       {/* Navigation Controls */}
       <footer className="flex items-center justify-between pt-2">
         <Button
-          variant="outline"
+          variant="secondary"
           onClick={handlePrevious}
           disabled={currentIndex === 0 || isSubmitting}
           aria-label="Go to previous question"
         >
-          &larr; Previous
+          ← Previous
         </Button>
 
         <div className="flex space-x-3">
           {currentIndex < totalQuestions - 1 ? (
-            <Button onClick={handleNext} aria-label="Go to next question">
-              Next Question &rarr;
+            <Button variant="primary" onClick={handleNext} aria-label="Go to next question">
+              Next Question →
             </Button>
           ) : (
             <Button
@@ -329,25 +342,25 @@ export const TakeAssessmentPage: React.FC = () => {
       {/* Accidental Submission Prevention Dialog */}
       {showConfirmModal && (
         <div
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in"
+          className="fixed inset-0 bg-surface-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in"
           role="dialog"
           aria-modal="true"
           aria-labelledby="confirm-submit-title"
         >
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
-            <h3 id="confirm-submit-title" className="text-lg font-bold text-slate-900">
+          <div className="bg-white dark:bg-surface-850 rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4 border border-surface-200 dark:border-surface-750">
+            <h3 id="confirm-submit-title" className="text-lg font-bold text-surface-900 dark:text-white">
               Submit Assessment?
             </h3>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              You have answered <span className="font-semibold text-indigo-600">{answeredCount}</span> of{' '}
-              <span className="font-semibold text-slate-900">{totalQuestions}</span> questions.
+            <p className="text-xs text-surface-600 dark:text-surface-400 leading-relaxed">
+              You have answered <span className="font-semibold text-brand-600 dark:text-brand-400">{answeredCount}</span> of{' '}
+              <span className="font-semibold text-surface-900 dark:text-white">{totalQuestions}</span> questions.
               {answeredCount < totalQuestions && (
-                <span className="block mt-2 text-amber-700 font-medium">
-                  Warning: You have {totalQuestions - answeredCount} unanswered question(s). Unanswered questions will be scored as incorrect.
+                <span className="block mt-2 text-amber-600 dark:text-amber-400 font-medium">
+                  Notice: You have {totalQuestions - answeredCount} unanswered question(s).
                 </span>
               )}
             </p>
-            <div className="flex justify-end space-x-3 pt-4 border-t border-slate-100">
+            <div className="flex justify-end space-x-3 pt-4 border-t border-surface-100 dark:border-surface-800">
               <Button
                 variant="outline"
                 size="sm"
