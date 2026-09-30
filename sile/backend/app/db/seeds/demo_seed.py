@@ -13,6 +13,7 @@ from app.models.accessibility import AccessibilityPreference
 from app.models.assessment import Assessment, AssessmentQuestion, QuestionDifficulty
 from app.db.seeds.curriculum_seed import seed_curriculum_and_content
 from app.db.seeds.practice_seed import seed_practice_questions
+from app.db.seeds.isaitamil_seed import seed_isaitamil_learner
 
 # ==============================================================================
 # DEMO SEED CONFIGURATION (DEVELOPMENT ONLY)
@@ -272,6 +273,8 @@ async def seed_all_demo_data(db: AsyncSession):
     assessment = await seed_demo_assessment(db)
     await seed_curriculum_and_content(db)
     await seed_practice_questions(db)
+    # Isaitamil depends on curriculum topics + the baseline assessment above.
+    await seed_isaitamil_learner(db)
     print("==================================================")
     print("DEMO, CURRICULUM & PRACTICE SEED COMPLETED SUCCESSFULLY!")
     print(f"Demo Credentials: {DEMO_USER_EMAIL} / {DEMO_USER_PASSWORD_RAW}")

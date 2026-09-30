@@ -57,6 +57,54 @@ export const AITutorPage: React.FC = () => {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [answerSubmitted, setAnswerSubmitted] = useState<boolean>(false);
 
+  // Multi-agent generation visualization (client-side staged progress).
+  // The backend /agents/coordinate call is a single blocking request, so we
+  // animate the pipeline stages while it runs to visualize the agents working.
+  const AGENT_STAGES = [
+    {
+      key: 'analysis',
+      label: 'Learner Analysis Agent',
+      detail: 'Reading mastery profile, weak & strong topics, and preferences',
+      icon: Brain,
+    },
+    {
+      key: 'adaptation',
+      label: 'Content Adaptation Agent',
+      detail: 'Rewriting the lesson with step-by-step visual scaffolding',
+      icon: BookOpen,
+    },
+    {
+      key: 'assessment',
+      label: 'Assessment Agent',
+      detail: 'Building a targeted checkpoint question for your gaps',
+      icon: HelpCircle,
+    },
+    {
+      key: 'accessibility',
+      label: 'Accessibility Agent',
+      detail: 'Applying plain-language summary and accessible formatting',
+      icon: Eye,
+    },
+  ] as const;
+
+  const [activeStage, setActiveStage] = useState<number>(0);
+
+  useEffect(() => {
+    if (!isCoordinating) {
+      setActiveStage(0);
+      return;
+    }
+    setActiveStage(0);
+    // Advance through stages while the request is in flight. Hold on the last
+    // stage until the real response resolves and clears isCoordinating.
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const stepDurations = [1200, 2200, 3400]; // ms offsets to reach stages 1,2,3
+    stepDurations.forEach((delay, idx) => {
+      timers.push(setTimeout(() => setActiveStage(idx + 1), delay));
+    });
+    return () => timers.forEach(clearTimeout);
+  }, [isCoordinating]);
+
   // Load Topics on mount
   useEffect(() => {
     loadTopics();
@@ -255,6 +303,25 @@ export const AITutorPage: React.FC = () => {
     result?.learner_context?.detected_mastery_level ||
     result?.learner_context?.learner_level ||
     'Intermediate';
+
+  // Profile attributes the multi-agent pipeline actually used to personalize.
+  const learnerCtx = result?.learner_context;
+  const weakTopics = learnerCtx?.weak_topics || [];
+  const strongTopics = learnerCtx?.strong_topics || [];
+  const learningGaps = learnerCtx?.evidence_based_learning_gaps || [];
+  const adaptationParams = learnerCtx?.adaptation_parameters || {};
+  const appliedAccessibility =
+    accessibilityData?.applied_adaptations || accessibilityData?.applied_features || [];
+
+  // Turn the learning/accessibility preference maps into human-readable chips.
+  const prettyKey = (k: string) =>
+    k.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+  const enabledPrefChips = Object.entries(learnerCtx?.learning_preferences || {})
+    .filter(([, v]) => v === true)
+    .map(([k]) => prettyKey(k));
+  const enabledA11yChips = Object.entries(learnerCtx?.accessibility_preferences || {})
+    .filter(([, v]) => v === true)
+    .map(([k]) => prettyKey(k));
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 pb-20 animate-fadeIn">
@@ -463,36 +530,118 @@ export const AITutorPage: React.FC = () => {
         </div>
       )}
 
-      {/* 4. Progressive Loading Feedback */}
+      {/* 4. Progressive Loading Feedback — Live Multi-Agent Pipeline Visualization */}
       {isCoordinating && (
         <div
           aria-live="polite"
-          className="bg-white rounded-3xl p-8 sm:p-12 border border-slate-200 shadow-card text-center space-y-6 animate-pulse"
+          aria-busy="true"
+          className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-card space-y-8 animate-fadeIn"
         >
-          <div className="inline-flex p-4 bg-brand-50 rounded-2xl text-brand-600 shadow-subtle">
-            <Brain className="w-10 h-10 animate-bounce" />
-          </div>
-          <div className="space-y-2 max-w-md mx-auto">
-            <h3 className="text-lg font-bold text-slate-900">Personalizing Your Learning Experience</h3>
-            <p className="text-xs sm:text-sm text-slate-500">
-              Evaluating your baseline profile, structuring progressive explanations, and verifying accessible formatting via live AI agents.
-            </p>
+          {/* Header */}
+          <div className="text-center space-y-3">
+            <div className="inline-flex p-4 bg-brand-50 rounded-2xl text-brand-600 shadow-subtle">
+              <Sparkles className="w-9 h-9 animate-pulse" />
+            </div>
+            <div className="space-y-1 max-w-md mx-auto">
+              <h3 className="text-lg font-bold text-slate-900">
+                Coordinating AI Agents for Your Lesson
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-500">
+                Four specialized agents are collaborating to personalize this lesson to your learner profile.
+              </p>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl mx-auto pt-2">
-            <div className="p-3 bg-brand-50 rounded-xl border border-brand-200 text-xs text-brand-700 font-semibold">
-              1. Learner Profile
+          {/* Overall progress bar */}
+          <div className="max-w-2xl mx-auto space-y-2">
+            <div className="flex items-center justify-between text-[11px] font-semibold text-slate-500">
+              <span>Pipeline progress</span>
+              <span className="text-brand-700">
+                Stage {Math.min(activeStage + 1, AGENT_STAGES.length)} of {AGENT_STAGES.length}
+              </span>
             </div>
-            <div className="p-3 bg-brand-50/70 rounded-xl border border-brand-200/70 text-xs text-brand-700 font-medium">
-              2. Content Breakdown
-            </div>
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600 font-medium">
-              3. Checkpoint Test
-            </div>
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600 font-medium">
-              4. Accessibility Pass
+            <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-brand-500 to-emerald-500 transition-all duration-700 ease-out"
+                style={{
+                  width: `${((Math.min(activeStage, AGENT_STAGES.length - 1) + 1) / AGENT_STAGES.length) * 100}%`,
+                }}
+              />
             </div>
           </div>
+
+          {/* Per-agent staged pipeline */}
+          <ol className="max-w-2xl mx-auto space-y-3">
+            {AGENT_STAGES.map((stage, idx) => {
+              const StageIcon = stage.icon;
+              const status =
+                idx < activeStage ? 'done' : idx === activeStage ? 'active' : 'pending';
+              return (
+                <li
+                  key={stage.key}
+                  className={[
+                    'flex items-center gap-4 p-4 rounded-2xl border transition-all duration-500',
+                    status === 'active'
+                      ? 'bg-brand-50 border-brand-300 shadow-subtle scale-[1.01]'
+                      : status === 'done'
+                      ? 'bg-emerald-50/70 border-emerald-200'
+                      : 'bg-slate-50 border-slate-200 opacity-70',
+                  ].join(' ')}
+                >
+                  <div
+                    className={[
+                      'flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center',
+                      status === 'active'
+                        ? 'bg-brand-600 text-white'
+                        : status === 'done'
+                        ? 'bg-emerald-500 text-white'
+                        : 'bg-slate-200 text-slate-500',
+                    ].join(' ')}
+                  >
+                    {status === 'done' ? (
+                      <CheckCircle2 className="w-5 h-5" />
+                    ) : status === 'active' ? (
+                      <StageIcon className="w-5 h-5 animate-bounce" />
+                    ) : (
+                      <StageIcon className="w-5 h-5" />
+                    )}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={[
+                          'text-sm font-bold truncate',
+                          status === 'pending' ? 'text-slate-500' : 'text-slate-900',
+                        ].join(' ')}
+                      >
+                        {stage.label}
+                      </span>
+                      {status === 'active' && (
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-brand-700 bg-brand-100 px-1.5 py-0.5 rounded">
+                          Working
+                        </span>
+                      )}
+                      {status === 'done' && (
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">
+                          Done
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-500 truncate">{stage.detail}</p>
+                  </div>
+
+                  {status === 'active' && (
+                    <RefreshCw className="w-4 h-4 text-brand-500 animate-spin flex-shrink-0" />
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+
+          <p className="text-center text-[11px] text-slate-400 max-w-md mx-auto">
+            Each agent writes an audited interaction log. You can review the full execution trace after the lesson is generated.
+          </p>
         </div>
       )}
 
@@ -521,6 +670,141 @@ export const AITutorPage: React.FC = () => {
               <span>Reflect</span>
             </span>
           </div>
+
+          {/* Personalization Basis — what the agents used from THIS learner's profile */}
+          <section
+            aria-labelledby="personalization-basis-heading"
+            className="bg-white rounded-3xl border border-brand-200/70 shadow-card overflow-hidden"
+          >
+            <div className="px-5 sm:px-6 py-3 bg-brand-50 border-b border-brand-200/70 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-brand-600" />
+              <h3
+                id="personalization-basis-heading"
+                className="text-xs sm:text-sm font-bold text-brand-800"
+              >
+                Personalized from this learner&apos;s profile
+              </h3>
+              <span className="ml-auto text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">
+                Profile-driven ✓
+              </span>
+            </div>
+
+            <div className="p-5 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-5 text-xs sm:text-sm">
+              {/* Pace / mode / difficulty */}
+              <div className="space-y-3">
+                <div className="flex flex-wrap gap-2">
+                  {adaptationParams.pace && (
+                    <Badge variant="brand" size="sm">Pace: {prettyKey(String(adaptationParams.pace))}</Badge>
+                  )}
+                  {adaptationParams.preferred_mode && (
+                    <Badge variant="brand" size="sm">
+                      Mode: {prettyKey(String(adaptationParams.preferred_mode))}
+                    </Badge>
+                  )}
+                  <Badge variant="default" size="sm">
+                    Level: {learnerCtx?.recommended_difficulty ? prettyKey(String(learnerCtx.recommended_difficulty)) : difficultyRating}
+                  </Badge>
+                  <Badge variant="default" size="sm">
+                    Mastery: {Math.round(masteryScoreVal * 100)}%
+                  </Badge>
+                </div>
+
+                {strongTopics.length > 0 && (
+                  <div>
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 mb-1.5 flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Strengths
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {strongTopics.map((t, i) => (
+                        <span
+                          key={i}
+                          className="px-2 py-0.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 font-medium"
+                        >
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {weakTopics.length > 0 && (
+                  <div>
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-amber-700 mb-1.5 flex items-center gap-1">
+                      <AlertCircle className="w-3.5 h-3.5" /> Focus Areas
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {weakTopics.map((t, i) => (
+                        <span
+                          key={i}
+                          className="px-2 py-0.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 font-medium"
+                        >
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Preferences the agents honored */}
+              <div className="space-y-3">
+                {enabledPrefChips.length > 0 && (
+                  <div>
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                      Learning preferences applied
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {enabledPrefChips.map((c, i) => (
+                        <span
+                          key={i}
+                          className="px-2 py-0.5 rounded-lg bg-brand-50 border border-brand-200 text-brand-700 font-medium"
+                        >
+                          ✓ {c}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {(enabledA11yChips.length > 0 || appliedAccessibility.length > 0) && (
+                  <div>
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                      Accessibility adaptations
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {(appliedAccessibility.length > 0 ? appliedAccessibility.map(prettyKey) : enabledA11yChips).map(
+                        (c, i) => (
+                          <span
+                            key={i}
+                            className="px-2 py-0.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 font-medium"
+                          >
+                            ♿ {c}
+                          </span>
+                        )
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Evidence-based gaps that drove the adaptation */}
+              {learningGaps.length > 0 && (
+                <div className="md:col-span-2">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                    Evidence used
+                  </div>
+                  <ul className="space-y-1">
+                    {learningGaps.slice(0, 3).map((g, i) => (
+                      <li key={i} className="flex items-start gap-2 text-slate-600">
+                        <span className="text-brand-500 mt-0.5">•</span>
+                        <span>{g}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          </section>
 
           {/* Adapted Lesson Article */}
           {result.adapted_content && (
